@@ -202,14 +202,21 @@ else:
     with tab5:
         st.header("Rain Prediction")
 
-        # Load the model
-        model_path = os.path.join(os.path.dirname(__file__), 'rainfall_model_tuned.pkl')
+        # Define the model path
+        model_path = 'rainfall_model_tuned.pkl'
 
-        if os.path.exists(model_path):
-            with open(model_path, 'rb') as model_file:
-                prediction_model = pickle.load(model_file)
+        # Debugging: Check current working directory
+        st.write(f"Current working directory: {os.getcwd()}")
+
+        # Check if the model file exists
+        if os.path.exists(model_path) and os.path.isfile(model_path):
+            try:
+                with open(model_path, 'rb') as model_file:
+                    prediction_model = pickle.load(model_file)
+            except Exception as e:
+                st.error(f"Error loading the model: {e}")
         else:
-            st.error("Model file not found. Check the path and try again.")
+            st.error(f"Model file not found. Please check the file path. Current path: {os.getcwd()}")
 
         def rain_prediction(input_data):
             input_array = np.array(input_data).reshape(1, -1)
