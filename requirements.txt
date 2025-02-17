@@ -1,2 +1,7 @@
+streamlit
+requests
+numpy
+scikit-learn
+pickle-mixin
 pandas==2.2.3
 Requests==2.32.3
