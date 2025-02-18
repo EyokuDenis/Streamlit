@@ -206,7 +206,7 @@ else:
         model_path = 'rainfall_model_tuned.pkl'
 
         # Debugging: Check current working directory
-        st.write(f"Current working directory: {os.getcwd()}")
+        #st.write(f"Current working directory: {os.getcwd()}")
 
         # Check if the model file exists
         if os.path.exists(model_path) and os.path.isfile(model_path):
