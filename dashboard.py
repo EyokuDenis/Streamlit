@@ -5,11 +5,16 @@ import numpy as np
 import time
 import pickle
 import os
+import matplotlib.pyplot as plt
+from supabase import create_client, Client
 
+SUPABASE_URL = "https://psaukwwamurcsogzbzlc.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXVrd3dhbXVyY3NvZ3piemxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg0MTc1ODIsImV4cCI6MjA1Mzk5MzU4Mn0._53uMlSicurNxIEiB22n78glymGgLLVclTCDnkiGfbw"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set up the page configuration
 st.set_page_config(page_title="Irrigation Control App", layout="wide", page_icon="💡")
-df = pd.DataFrame(np.random.randn(100, 4), columns=["moisture", "rain", "temp", "humid"])
+#df = pd.DataFrame(np.random.randn(100, 4), columns=["moisture", "rain", "temp", "humid"])
 
 # Initialize session state for theme, colors, and user authentication
 if "theme" not in st.session_state:
@@ -142,25 +147,70 @@ else:
                 st.write("Irrigation System Status: Enabled")
 
     # Tab 3: Analytics
+    # Tab 3: Analytics
     with tab3:
         st.header("Analytics")
-        if analytics_option == "System Status":
-            st.write("Displaying system running status...")
-            st.line_chart(df)
-        elif analytics_option == "Temperature":
-            st.write("Displaying temperature logs...")
-            st.line_chart(df[["temp"]])
-        elif analytics_option == "Humidity":
-            st.write("Displaying humidity logs...")
-            st.line_chart(df[["humid"]])
-        elif analytics_option == "Soil moisture level":
-            st.write("Displaying soil moisture level logs...")
-            st.line_chart(df[["moisture"]])
-        elif analytics_option == "Rain/Precipitation":
-            st.write("Displaying rain/precipitation logs...")
-            st.line_chart(df[["rain"]])
-        elif analytics_option == "Predictions":
-            st.write("Displaying possibility of rainfall...")
+    
+        def fetch_data(table_name, limit=100):
+            try:
+                data = supabase.table(table_name).select("*").limit(limit).execute()
+                if data.data:
+                    st.write("Data fetched successfully!")
+                    return data.data
+                else:
+                    st.warning(f"No data found in table: {table_name}")
+                    return []
+            except Exception as e:
+                st.error(f"Error fetching data from table {table_name}: {e}")
+                return []
+
+            
+        def plot_data(df, analytics_option):
+            if analytics_option == "Temperature":
+                st.write("Displaying temperature logs...")
+                fig, ax = plt.subplots()
+                ax.scatter(df['created_at'], df ['temperature'])
+                st.pyplot(fig)#t's method to render the plot
+            elif analytics_option == "Humidity":
+                st.write("Displaying humidity logs...")
+                fig, ax = plt.subplots()
+                ax.scatter(df['created_at'], df ['humidity'])
+                st.pyplot(fig)#t's method to render the plote Streamlit's method to render the plot
+            elif analytics_option == "Soil moisture level":
+                st.write("Displaying Soil moisture logs...")
+                fig, ax = plt.subplots()
+                ax.scatter(df['created_at'], df ['moisture_1'])
+                st.pyplot(fig)#t's method to render the plote Streamlit's method to render the plot
+            elif analytics_option == "Rain/Precipitation":
+                st.write("Displaying rain/precipitation logs...")
+                fig, ax = plt.subplots()
+                ax.scatter(df['created_at'], df ['rain'])
+                st.pyplot(fig)#t's method to render the plote Streamlit's method to render the plot
+    
+    # Main function for fetching and displaying data
+        def main():
+            table_name = st.selectbox("Select a table:", ["garden_1", "garden_2"])
+            limit = st.number_input("Limit records:", min_value=1, value=100)
+
+            if st.button("Fetch Data"):
+                data = fetch_data(table_name, limit)
+                if data:
+                    df = pd.DataFrame(data)
+                    st.dataframe(df)
+
+                    csv = df.to_csv(index=False).encode('utf-8')
+                    st.download_button("Download CSV", csv, f"{table_name}_data.csv", "text/csv")
+
+                    if 'created_at' in df.columns:
+                        plot_data(df, analytics_option)
+                    else:
+                        st.warning("'created_at' column not found in the dataset.")
+                else:
+                    st.warning("No data found.")
+    
+        if __name__ == "__main__":
+            main()
+
 
     # Tab 4: Settings
     with tab4:
@@ -204,7 +254,7 @@ else:
 
         # Define the model path
         model_path = 'rainfall_model_tuned.pkl'
-        
+
         # Check if the model file exists
         if os.path.exists(model_path) and os.path.isfile(model_path):
             try:
